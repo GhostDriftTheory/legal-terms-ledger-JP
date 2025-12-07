@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>法務ADIC 契約フェア台帳</title>
     
     <!-- デザイン用: Tailwind CSS -->
@@ -18,60 +18,50 @@
     <!-- Google Fonts: Noto Sans JP -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans JP', sans-serif; }
+        body { font-family: 'Noto Sans JP', sans-serif; -webkit-font-smoothing: antialiased; }
+        html { scroll-behavior: smooth; }
+        * { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
-<body class="bg-[#FAFAFA] text-slate-700">
+<body class="bg-slate-50 text-slate-700">
     <div id="root"></div>
 
     <script type="text/babel" data-presets="react, typescript">
         const { useMemo, useState, useEffect, useRef } = React;
 
-        // --- Icons (Lucide React 代替) ---
-        // ブラウザ単体で動かすため、アイコンをSVGコンポーネントとして定義します
+        // --- Icons (SVG Components) ---
         const IconBase = ({ children, className, ...props }) => (
-            <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="24" height="24" viewBox="0 0 24 24" 
-                fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
-                className={className} 
-                {...props}
-            >
-                {children}
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
         );
+        const FileText = (p) => <IconBase {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></IconBase>;
+        const Scale = (p) => <IconBase {...p}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></IconBase>;
+        const Calculator = (p) => <IconBase {...p}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></IconBase>;
+        const ShieldAlert = (p) => <IconBase {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></IconBase>;
+        const ShieldCheck = (p) => <IconBase {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></IconBase>;
+        const ArrowRight = (p) => <IconBase {...p}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></IconBase>;
+        const Share2 = (p) => <IconBase {...p}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></IconBase>;
+        const RefreshCw = (p) => <IconBase {...p}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconBase>;
+        const Info = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>;
+        const AlertTriangle = (p) => <IconBase {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>;
+        const CheckCircle2 = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></IconBase>;
+        const Settings = (p) => <IconBase {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>;
+        const BookOpen = (p) => <IconBase {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>;
+        const Gavel = (p) => <IconBase {...p}><path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></IconBase>;
+        const History = (p) => <IconBase {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></IconBase>;
+        const Download = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>;
+        const Upload = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></IconBase>;
+        const Copy = (p) => <IconBase {...p}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconBase>;
+        const Lightbulb = (p) => <IconBase {...p}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></IconBase>;
+        const Zap = (p) => <IconBase {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
+        const Users = (p) => <IconBase {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></IconBase>;
+        const Search = (p) => <IconBase {...p}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></IconBase>;
+        const Book = (p) => <IconBase {...p}><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></IconBase>;
+        const ChevronDown = (p) => <IconBase {...p}><path d="m6 9 6 6 6-6"/></IconBase>;
+        const XIcon = (p) => <IconBase {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>;
+        const ArrowUp = (p) => <IconBase {...p}><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></IconBase>;
+        const ThumbsUp = (p) => <IconBase {...p}><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></IconBase>;
 
-        const FileText = (props) => <IconBase {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></IconBase>;
-        const Scale = (props) => <IconBase {...props}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></IconBase>;
-        const Calculator = (props) => <IconBase {...props}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></IconBase>;
-        const ShieldAlert = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></IconBase>;
-        const ShieldCheck = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></IconBase>;
-        const ArrowRight = (props) => <IconBase {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></IconBase>;
-        const Share2 = (props) => <IconBase {...props}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></IconBase>;
-        const RefreshCw = (props) => <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconBase>;
-        const Info = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>;
-        const AlertTriangle = (props) => <IconBase {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>;
-        const CheckCircle2 = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></IconBase>;
-        const Settings = (props) => <IconBase {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>;
-        const BookOpen = (props) => <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>;
-        const Gavel = (props) => <IconBase {...props}><path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></IconBase>;
-        const History = (props) => <IconBase {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></IconBase>;
-        const Download = (props) => <IconBase {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>;
-        const Upload = (props) => <IconBase {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></IconBase>;
-        const Copy = (props) => <IconBase {...props}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconBase>;
-        const Lightbulb = (props) => <IconBase {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></IconBase>;
-        const Zap = (props) => <IconBase {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
-        const Users = (props) => <IconBase {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></IconBase>;
-        const Search = (props) => <IconBase {...props}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></IconBase>;
-        const Book = (props) => <IconBase {...props}><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></IconBase>;
-        const ChevronDown = (props) => <IconBase {...props}><path d="m6 9 6 6 6-6"/></IconBase>;
-        const XIcon = (props) => <IconBase {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>; // 変数名を X から XIcon に変更
-        const ArrowUp = (props) => <IconBase {...props}><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></IconBase>;
-
-        // --- Types & Interfaces ---
-        // TypeScript のインターフェースは実行時には不要ですが、型定義として残しておきます（Babelが除去します）
-        
-        // --- Constants ---
+        // --- Constants & Config ---
         const RULE_SETS = [
           {
             id: "industryBaseline",
@@ -96,13 +86,18 @@
         const CONTRACT_TEMPLATES = [
           {
             id: "friendly",
-            title: "契約A（ホワイト：良心的）",
+            title: "契約A（ホワイト）",
+            label: "ホワイト契約",
+            type: "good",
             text: `第◯条（報酬および支払時期）
 1. 甲は、本件業務の対価として、乙に対し報酬金額として金 800,000 円（税込）を支払う。
 2. 甲は、乙による成果物の検収完了後 30 日以内に前項の報酬を支払うものとする。
 3. 甲は、前項の支払を遅延した場合、支払期日の翌日から完済に至るまで、年 14.6% の割合による遅延損害金を乙に支払うものとする。
 4. 検収期間は、成果物の納品日から 10 日間とする。`,
             params: { amount: 80, payDays: 30, inspectionDays: 10, lateRate: 0.146, taxIncluded: true, taxRate: 0.10 },
+            storyTitle: "ここが安心！（ホワイト要約）",
+            storyIcon: ThumbsUp,
+            storyColor: "emerald",
             simpleExplanation: [
               "30日入金：業界標準より早く、資金繰りに優しい。",
               "検収10日：放置されるリスクが低く安全。",
@@ -111,17 +106,22 @@
           },
           {
             id: "harsh",
-            title: "契約B（ブラック：重い条件）",
+            title: "契約B（ブラック）",
+            label: "ブラック契約",
+            type: "bad",
             text: `第◯条（報酬および支払時期）
 1. 甲は、本件業務の対価として、乙に対し報酬金額として金 800,000 円（税別）を支払う。
 2. 甲は、乙による成果物の検収完了後 90 日以内に前項の報酬を支払うものとする。
 3. 甲は、支払遅延が生じた場合であっても、遅延損害金は年 3% を上限とする。
 4. 検収期間は、甲が必要と認める期間とし、特段の定めのない限りこれを制限しない。`,
             params: { amount: 80, payDays: 90, inspectionDays: 999, lateRate: 0.03, taxIncluded: false, taxRate: 0.10 },
+            storyTitle: "ここがヤバい！（ブラック要約）",
+            storyIcon: AlertTriangle,
+            storyColor: "rose",
             simpleExplanation: [
-              "90日後払い：下請法(60日)を超える可能性が高い危険水準。",
-              "検収「無制限」：難癖をつけられて永遠に入金されないリスク。",
-              "遅延金3%：企業側が支払いを遅らせても痛くない低設定。"
+              "90日後払い：下請法(60日)を超える危険水準。",
+              "検収「無制限」：永遠に入金されないリスク。",
+              "遅延金3%：企業側が遅らせても痛くない低設定。"
             ]
           },
         ];
@@ -260,9 +260,9 @@
 
           if (!isOpen) return null;
 
-          const payComment = penalty.penPay > 20 ? "大幅な超過。下請法等の基準を大きく逸脱。" : penalty.penPay > 0 ? "基準超過。資金繰りへの影響あり。" : "基準内。安全。";
-          const inspComment = penalty.penInspection > 20 ? "実質無制限の恐れ。極めて高リスク。" : penalty.penInspection > 0 ? "長期化のリスクあり。" : "短期間で完了。安全。";
-          const lateComment = penalty.penLate > 20 ? "ペナルティとして機能しない低水準。" : penalty.penLate > 0 ? "抑止力としてやや弱い。" : "十分な抑止力あり。";
+          const payComment = penalty.penPay > 20 ? "大幅超過。下請法等の基準を大きく逸脱。" : penalty.penPay > 0 ? "基準超過。資金繰りへの影響あり。" : "基準内。安全。";
+          const inspComment = penalty.penInspection > 20 ? "実質無制限の恐れ。極めて高リスク。" : penalty.penInspection > 0 ? "長期化リスクあり。" : "短期間で完了。安全。";
+          const lateComment = penalty.penLate > 20 ? "機能しない低水準。" : penalty.penLate > 0 ? "抑止力として弱い。" : "十分な抑止力あり。";
 
           return (
             <div ref={ref} className="mt-8 mb-12 bg-slate-50 border border-slate-200 rounded-xl p-5 md:p-8 text-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-inner">
@@ -359,6 +359,7 @@
           const [regStatus, setRegStatus] = useState("idle");
           const [regMsg, setRegMsg] = useState("");
           const [regIdInput, setRegIdInput] = useState("");
+          const [showLedger, setShowLedger] = useState(false);
 
           const template = useMemo(() => CONTRACT_TEMPLATES.find(t => t.id === templateId), [templateId]);
           const ruleSet = useMemo(() => RULE_SETS.find(r => r.id === ruleSetId), [ruleSetId]);
@@ -373,12 +374,11 @@
             setRegStatus("idle");
             setRegMsg("");
             setShowDeepDive(false);
+            setShowLedger(false);
           }, [template]);
 
           const penalty = useMemo(() => computePenalty(params, ruleSet), [params, ruleSet]);
-          
           const taxInfo = useMemo(() => computeTaxInfo(params.amount, params.taxRate, params.taxIncluded), [params.amount, params.taxRate, params.taxIncluded]);
-
           const ledger = useMemo(() => buildLedger(params, ruleSet, penalty, ruleSet.name), [params, ruleSet, penalty]);
           const ledgerId = useMemo(() => createLedgerId(params, ruleSet), [params, ruleSet]);
           const verified = useMemo(() => verifyLedger(params, ruleSet, ledger, penalty), [params, ruleSet, ledger, penalty]);
@@ -399,9 +399,21 @@
             return { bg: "bg-rose-50", border: "border-rose-500", text: "text-rose-700", meter: "bg-rose-600", icon: ShieldAlert, label: "危険" };
           };
 
+          const getParamStatus = (val, max, pen) => {
+            if (pen === 0) return { color: "text-emerald-600", bg: "bg-emerald-50", label: "基準内 (安全)" };
+            if (pen > 20) return { color: "text-rose-600", bg: "bg-rose-50", label: `基準大幅超過 (-${pen}点)` };
+            return { color: "text-amber-600", bg: "bg-amber-50", label: `基準超過 (-${pen}点)` };
+          };
+          
+          const getLateStatus = (val, min, pen) => {
+            if (pen === 0) return { color: "text-emerald-600", bg: "bg-emerald-50", label: "基準クリア" };
+            return { color: "text-rose-600", bg: "bg-rose-50", label: `基準未満 (-${pen}点)` };
+          };
+
           const risk = getRiskColor(penalty.score, ruleSet.targetScore);
           const RiskIcon = risk.icon;
           const isHarsh = template.id === "harsh";
+          const StoryIcon = template.storyIcon;
 
           const renderPatchInfo = (p) => {
             const config = {
@@ -445,220 +457,285 @@
           };
 
           return (
-            <div className="min-h-screen bg-[#FAFAFA] text-slate-700 font-sans selection:bg-indigo-100 pb-24 text-sm sm:text-base">
+            <div className="min-h-screen pb-24 text-sm sm:text-base">
               <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
 
-              <div className="border-b border-slate-200 bg-white sticky top-0 z-30 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div>
-                        <span className="inline-block bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider border border-slate-200 mb-1">LEGALTECH DEMO</span>
-                        <div className="flex items-center gap-1.5 text-indigo-700 mb-0.5">
-                          <Gavel className="w-4 h-4" /><span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">法務ADIC</span>
-                        </div>
-                        <h1 className="text-lg sm:text-2xl font-bold text-slate-800 tracking-tight leading-tight">法務ADIC 契約フェア台帳</h1>
-                        <p className="text-xs sm:text-sm font-bold text-indigo-700 mt-1 flex items-center gap-1.5">
-                           <Scale className="w-4 h-4 shrink-0" />契約の公平性を100点満点で評価
-                        </p>
+              {/* Header */}
+              <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+                <div className="max-w-xl md:max-w-7xl mx-auto px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-indigo-700 mb-0.5">
+                        <Gavel className="w-4 h-4" /><span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">法務ADIC</span>
                       </div>
-                      <div className="flex flex-col gap-1 w-full sm:w-auto min-w-[200px]">
-                         <label className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold flex items-center gap-1"><FileText className="w-3 h-3" /> Contract Template</label>
-                         <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} className="bg-white border-slate-300 text-slate-700 text-sm rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none shadow-sm">
-                           {CONTRACT_TEMPLATES.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
-                         </select>
-                      </div>
+                      <h1 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight leading-tight">契約フェア台帳</h1>
                     </div>
-
-                    <div className="bg-indigo-950 border border-indigo-900 rounded-lg p-3 sm:p-4 shadow-lg text-slate-100">
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="flex-1 space-y-2">
-                                <h3 className="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5" /> この事例の意味</h3>
-                                <p className="text-[11px] sm:text-xs text-indigo-100 leading-relaxed">
-                                    この契約Bは<strong className="text-white">「支払遅延(90日)・検収不明・低ペナルティ」</strong>の3重苦。本デモはAIの気分ではなく<span className="bg-indigo-800 px-1 rounded text-emerald-300 font-semibold mx-0.5">確定した整数ルール</span>でこれを採点し、修正案を即提示します。
-                                </p>
-                            </div>
-                            {isHarsh && (
-                                <div className="flex-1 border-t md:border-t-0 md:border-l border-indigo-800 pt-3 md:pt-0 md:pl-4 space-y-2">
-                                    <h3 className="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> 社会実装の威力</h3>
-                                    <p className="text-[11px] sm:text-xs text-indigo-100 leading-relaxed">
-                                        全契約を一斉スキャンすれば、<strong className="text-white">「危険な契約・下請けいじめ」</strong>を瞬時に特定可能。単なる計算機ではなく、<span className="bg-emerald-900/50 px-1 rounded text-emerald-300 font-semibold mx-0.5">社会の公平性を監視する技術</span>です。
-                                    </p>
-                                </div>
-                            )}
-                        </div>
+                    {/* Template Tab */}
+                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                        {CONTRACT_TEMPLATES.map((t) => (
+                            <button
+                                key={t.id}
+                                onClick={() => setTemplateId(t.id)}
+                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${templateId === t.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                {t.label}
+                            </button>
+                        ))}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <main className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4 relative z-10">
-                <div className="lg:col-span-4 flex flex-col gap-4">
-                  <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col h-full">
-                    <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-slate-400" /><h2 className="text-xs sm:text-sm font-semibold text-slate-700">契約書ドラフト（入力）</h2>
-                    </div>
-                    <div className="p-3 flex-1 flex flex-col gap-3">
-                      <div className="relative group flex-1">
-                        <div className="w-full h-full min-h-[150px] bg-slate-50 border border-slate-200 rounded px-3 py-2 text-[11px] sm:text-xs text-slate-800 font-mono whitespace-pre-wrap leading-relaxed overflow-y-auto max-h-[250px]">
-                          {segments.map((s, i) => s.mark ? <mark key={i} className="bg-amber-200 text-slate-900 rounded px-0.5">{s.text}</mark> : <span key={i}>{s.text}</span>)}
+              <div className="max-w-xl md:max-w-7xl mx-auto px-4 py-4 space-y-6 relative z-10">
+                
+                {/* Story Card */}
+                <div className={`rounded-xl p-4 shadow-sm border ${template.type === 'good' ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                    <div className="flex gap-3 items-start">
+                        <div className={`p-2 rounded-full shrink-0 ${template.type === 'good' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                            <StoryIcon className="w-5 h-5" />
                         </div>
-                        <div className="mt-1 text-[10px] text-slate-400 text-right">Ledger行ホバーでハイライト</div>
-                      </div>
-                      {template.simpleExplanation && (
-                          <div className="bg-rose-50 border border-rose-100 rounded p-2.5">
-                              <div className="flex items-center gap-1 mb-1.5"><AlertTriangle className="w-3 h-3 text-rose-500" /><span className="text-[11px] font-bold text-rose-700">ここがヤバい（要約）</span></div>
-                              <ul className="list-disc list-inside space-y-0.5">{template.simpleExplanation.map((t, i) => <li key={i} className="text-[10px] sm:text-[11px] text-slate-700">{t}</li>)}</ul>
-                          </div>
-                      )}
-                      <div className="space-y-3 pt-3 border-t border-slate-100">
-                        <div className="flex items-center justify-between text-[10px]"><span className="text-slate-500 font-semibold uppercase">Parsed Params</span><Settings className="w-3 h-3 text-slate-400" /></div>
-                        
-                        {/* 金額×税のUIカード */}
-                        <div className="space-y-2">
-                          <div className="bg-slate-50 px-2 py-2 rounded border border-slate-200">
-                            <div className="flex justify-between items-center mb-1.5">
-                              <span className="text-slate-500 text-[10px] flex items-center gap-1.5"><Calculator className="w-3 h-3"/> 報酬金額 × 税</span>
-                              <div className="text-right">
-                                <span className="font-mono text-xs font-bold text-slate-800 block">合計 {taxInfo.total.toFixed(1)} 万円</span>
-                                <span className="text-[9px] text-slate-500">税抜 {taxInfo.base.toFixed(1)} / 税 {taxInfo.tax.toFixed(1)}</span>
-                              </div>
+                        <div>
+                            <h3 className={`font-bold text-sm mb-1 ${template.type === 'good' ? 'text-emerald-800' : 'text-rose-800'}`}>{template.storyTitle}</h3>
+                            <ul className="text-xs space-y-1 text-slate-700">
+                                {template.simpleExplanation.map((line, i) => (
+                                    <li key={i} className="leading-snug">• {line}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    {/* Left: Input & Params */}
+                    <div className="md:col-span-7 space-y-4">
+                        <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-slate-400" /><h2 className="text-sm font-bold text-slate-700">STEP 1: 契約書の内容を確認</h2>
                             </div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <input type="range" min={10} max={300} step={10} value={params.amount} onChange={(e) => setParams(prev => ({...prev, amount: Number(e.target.value)}))} className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 touch-pan-x" />
-                                <span className="text-[10px] text-slate-500 font-mono w-10 text-right">{params.amount}万</span>
-                            </div>
-                            <div className="flex items-center justify-between text-[10px]">
-                                <div className="flex items-center gap-2">
-                                    <label className="inline-flex items-center gap-1 cursor-pointer"><input type="radio" className="w-3 h-3 accent-indigo-600" checked={params.taxIncluded} onChange={() => setParams(p => ({...p, taxIncluded: true}))} /><span className="text-slate-600">税込</span></label>
-                                    <label className="inline-flex items-center gap-1 cursor-pointer"><input type="radio" className="w-3 h-3 accent-indigo-600" checked={!params.taxIncluded} onChange={() => setParams(p => ({...p, taxIncluded: false}))} /><span className="text-slate-600">税別</span></label>
+                            <div className="p-4 flex-1 flex flex-col gap-4">
+                                <div className="relative group">
+                                    <div className="w-full h-32 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 font-mono whitespace-pre-wrap leading-relaxed overflow-y-auto">
+                                        {segments.map((s, i) => s.mark ? <mark key={i} className="bg-amber-200 text-slate-900 rounded px-0.5">{s.text}</mark> : <span key={i}>{s.text}</span>)}
+                                    </div>
+                                    <div className="mt-1 text-[10px] text-slate-400 text-right">※下の台帳をタップすると該当箇所が光ります</div>
                                 </div>
-                                <span className="text-slate-400">税率{(params.taxRate*100).toFixed(0)}%</span>
+
+                                <div className="space-y-3 pt-3 border-t border-slate-100">
+                                    <div className="flex items-center justify-between text-[10px]">
+                                        <span className="text-slate-500 font-bold uppercase tracking-wider">▼ 条件シミュレーション</span>
+                                        <Settings className="w-3 h-3 text-slate-400" />
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        {/* 金額・税 */}
+                                        <div className="bg-slate-50 px-3 py-3 rounded border border-slate-200 transition-all hover:border-indigo-300">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className="text-slate-600 text-xs font-bold flex items-center gap-1.5"><Calculator className="w-3.5 h-3.5 text-indigo-500"/> 報酬金額</span>
+                                                <div className="text-right">
+                                                    <span className="font-mono text-sm font-bold text-indigo-700">{taxInfo.total.toFixed(1)} <span className="text-xs font-normal text-slate-500">万円(税込)</span></span>
+                                                    <div className="text-[10px] text-slate-400 mt-0.5">
+                                                        手取り: <span className="font-bold text-slate-600">{taxInfo.base.toFixed(1)}</span> / 税: {taxInfo.tax.toFixed(1)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <input type="range" min={10} max={300} step={10} value={params.amount} onChange={(e) => setParams(prev => ({...prev, amount: Number(e.target.value)}))} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500 touch-pan-x mb-2" />
+                                            <div className="flex justify-end gap-3 text-[10px]">
+                                                <label className="flex items-center gap-1 cursor-pointer"><input type="radio" checked={params.taxIncluded} onChange={() => setParams(p => ({...p, taxIncluded: true}))} className="accent-indigo-500"/> 税込</label>
+                                                <label className="flex items-center gap-1 cursor-pointer"><input type="radio" checked={!params.taxIncluded} onChange={() => setParams(p => ({...p, taxIncluded: false}))} className="accent-indigo-500"/> 税別</label>
+                                            </div>
+                                        </div>
+
+                                        {/* 支払サイト */}
+                                        {(() => {
+                                            const status = getParamStatus(params.payDays, ruleSet.maxPayDays, penalty.penPay);
+                                            return (
+                                                <div className={`px-3 py-3 rounded border transition-all ${status.bg} ${penalty.penPay > 0 ? 'border-rose-200' : 'border-emerald-200'}`}>
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-slate-600 text-xs font-bold flex items-center gap-1"><History className="w-3.5 h-3.5"/> 支払サイト</span>
+                                                        <span className={`font-mono text-xs font-bold ${status.color}`}>{status.label}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-end mb-2">
+                                                        <span className="text-[10px] text-slate-400">基準: {ruleSet.maxPayDays}日以内</span>
+                                                        <span className="font-mono text-sm font-bold text-slate-700">{params.payDays} <span className="text-xs font-normal">日</span></span>
+                                                    </div>
+                                                    <input type="range" min={15} max={120} step={5} value={params.payDays} onChange={(e) => setParams(prev => ({...prev, payDays: Number(e.target.value)}))} className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer touch-pan-x ${penalty.penPay > 0 ? 'bg-rose-200 accent-rose-500' : 'bg-emerald-200 accent-emerald-500'}`} />
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* 検収期間 */}
+                                        {(() => {
+                                            const status = getParamStatus(params.inspectionDays, ruleSet.maxInspectionDays, penalty.penInspection);
+                                            const valText = params.inspectionDays >= 999 ? "無制限" : `${params.inspectionDays}日`;
+                                            return (
+                                                <div className={`px-3 py-3 rounded border transition-all ${status.bg} ${penalty.penInspection > 0 ? 'border-rose-200' : 'border-emerald-200'}`}>
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-slate-600 text-xs font-bold flex items-center gap-1"><Search className="w-3.5 h-3.5"/> 検収期間</span>
+                                                        <span className={`font-mono text-xs font-bold ${status.color}`}>{status.label}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-end mb-2">
+                                                        <span className="text-[10px] text-slate-400">基準: {ruleSet.maxInspectionDays}日以内</span>
+                                                        <span className="font-mono text-sm font-bold text-slate-700">{valText}</span>
+                                                    </div>
+                                                    <div className="flex gap-2 items-center">
+                                                        <input 
+                                                            type="range" 
+                                                            min={7} 
+                                                            max={60} 
+                                                            step={7} 
+                                                            disabled={params.inspectionDays >= 999}
+                                                            value={params.inspectionDays >= 999 ? 60 : params.inspectionDays} 
+                                                            onChange={(e) => setParams(prev => ({...prev, inspectionDays: Number(e.target.value)}))} 
+                                                            className={`flex-1 h-1.5 rounded-lg appearance-none cursor-pointer touch-pan-x ${params.inspectionDays >= 999 ? 'bg-slate-200' : (penalty.penInspection > 0 ? 'bg-rose-200 accent-rose-500' : 'bg-emerald-200 accent-emerald-500')}`} 
+                                                        />
+                                                        <label className="flex items-center gap-1 text-[10px] cursor-pointer whitespace-nowrap">
+                                                            <input type="checkbox" checked={params.inspectionDays >= 999} onChange={(e) => setParams(prev => ({...prev, inspectionDays: e.target.checked ? 999 : 14}))} className="accent-rose-500"/> 
+                                                            無制限
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* 遅延損害金 */}
+                                        {(() => {
+                                            const lateVal = Math.round(params.lateRate * 10000);
+                                            const status = getLateStatus(lateVal, ruleSet.minLateRateBps, penalty.penLate);
+                                            return (
+                                                <div className={`px-3 py-3 rounded border transition-all ${status.bg} ${penalty.penLate > 0 ? 'border-rose-200' : 'border-emerald-200'}`}>
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-slate-600 text-xs font-bold flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5"/> 遅延損害金</span>
+                                                        <span className={`font-mono text-xs font-bold ${status.color}`}>{status.label}</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-end mb-2">
+                                                        <span className="text-[10px] text-slate-400">基準: 年{(ruleSet.minLateRateBps/100).toFixed(1)}%以上</span>
+                                                        <span className="font-mono text-sm font-bold text-slate-700">年{(params.lateRate * 100).toFixed(1)}%</span>
+                                                    </div>
+                                                    <input type="range" min={0} max={20} step={0.1} value={params.lateRate * 100} onChange={(e) => setParams(prev => ({...prev, lateRate: Number(e.target.value) / 100}))} className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer touch-pan-x ${penalty.penLate > 0 ? 'bg-rose-200 accent-rose-500' : 'bg-emerald-200 accent-emerald-500'}`} />
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
                             </div>
-                          </div>
+                        </section>
+                    </div>
 
-                          {/* 既存パラメータUI */}
-                          <div className="bg-slate-50 px-2 py-1.5 rounded border border-slate-200">
-                            <div className="flex justify-between items-center mb-1"><span className="text-slate-500 text-[10px] flex items-center gap-1"><History className="w-3 h-3"/> 支払サイト</span><span className="font-mono text-xs font-bold text-indigo-600">{params.payDays}日</span></div>
-                            <input type="range" min={15} max={120} step={5} value={params.payDays} onChange={(e) => setParams(prev => ({...prev, payDays: Number(e.target.value)}))} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
-                          </div>
-                          <div className="flex justify-between items-center bg-slate-50 px-2 py-2 rounded border border-slate-200"><span className="text-slate-500 text-[10px]">検収期間</span><span className="font-mono text-xs text-slate-800">{params.inspectionDays >= 999 ? <span className="text-amber-600">無制限</span> : `${params.inspectionDays}日`}</span></div>
-                          <div className="flex justify-between items-center bg-slate-50 px-2 py-2 rounded border border-slate-200"><span className="text-slate-500 text-[10px]">遅延損害金</span><span className="font-mono text-xs text-slate-800">{(params.lateRate * 100).toFixed(1)}%</span></div>
+                    {/* Right: Score & Result */}
+                    <div className="md:col-span-5 space-y-4">
+                        <section className={`bg-white border rounded-xl overflow-hidden shadow-md p-5 flex flex-col items-center justify-center gap-3 relative ${risk.border}`}>
+                            <div className="absolute top-0 left-0 w-full bg-slate-50/50 border-b border-slate-100 px-4 py-1.5 flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">STEP 2: 公平性スコア</span>
+                                <span className="text-[10px] text-slate-400">Target: {ruleSet.targetScore}点</span>
+                            </div>
+                            <div className="mt-6 relative flex items-center justify-center">
+                                <svg className="w-32 h-32 transform -rotate-90">
+                                    <circle cx="50%" cy="50%" r="42%" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100" />
+                                    <circle cx="50%" cy="50%" r="42%" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={264} strokeDashoffset={264 - (264 * penalty.score) / 100} className={`${risk.text} transition-all duration-1000 ease-out`} strokeLinecap="round" />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className={`text-4xl font-bold ${risk.text}`}>{penalty.score}</span>
+                                    <span className="text-[10px] text-slate-400">/ 100</span>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowDeepDive(true)} className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border ${risk.bg} ${risk.border} ${risk.text} hover:opacity-80 transition-opacity cursor-pointer shadow-sm group`}>
+                                <RiskIcon className="w-4 h-4" />
+                                <span className="font-bold">{risk.label}</span>
+                                <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                            </button>
+                        </section>
+
+                        {/* Patch (条件付き表示) */}
+                        {patch && (
+                            <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm p-4 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                                    <RefreshCw className="w-4 h-4 text-indigo-600" />
+                                    <h3 className="text-xs font-bold text-slate-700">STEP 3: 改善提案 (最小修正)</h3>
+                                </div>
+                                <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 text-xs relative overflow-hidden">
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />
+                                    {renderPatchInfo(patch)}
+                                    <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center font-bold text-indigo-700">
+                                        <span>改善後のスコア</span>
+                                        <span>+{patch.newPenalty.score - penalty.score} pts (計{patch.newPenalty.score}点)</span>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Social Impact (スマホで見やすく整理) */}
+                        {isHarsh && (
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-600 leading-relaxed shadow-inner">
+                                <h4 className="font-bold text-indigo-900 mb-2 flex items-center gap-1.5">
+                                    <Users className="w-3.5 h-3.5" /> 全契約を一斉スキャンしたら？
+                                </h4>
+                                <p>人間が読むのではなく、<strong>確定した整数ルールと台帳で判定</strong>するため、「なぜその点数か」を後から必ず説明できます。これにより、組織全体の「隠れブラック契約」を一瞬であぶり出せます。</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Ledger (Default Closed) */}
+                <div className="mt-6 border-t border-slate-200 pt-6">
+                    <button 
+                        onClick={() => setShowLedger(!showLedger)} 
+                        className="w-full flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 transition-colors group"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Calculator className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-bold text-slate-700">計算の証拠 (ADIC Ledger)</h3>
+                                <p className="text-[10px] text-slate-400">ID: {ledgerId}</p>
+                            </div>
                         </div>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-
-                <div className="lg:col-span-5 flex flex-col gap-4">
-                  <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col h-full relative">
-                    <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                      <div className="flex items-center gap-2"><Calculator className="w-4 h-4 text-slate-400" /><h2 className="text-xs sm:text-sm font-semibold text-slate-700">ADIC Ledger (Σ₁台帳)</h2></div>
-                      <div className="flex items-center gap-1"><span className="text-[10px] text-slate-400">ID:</span><span className="font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 select-all max-w-[80px] sm:max-w-none truncate">{ledgerId}</span></div>
-                    </div>
-                    <div className="flex-1 overflow-x-auto bg-white scrollbar-thin scrollbar-thumb-slate-200">
-                      <table className="w-full text-left border-collapse min-w-[300px]">
-                        <thead className="bg-slate-50 sticky top-0 z-10 text-[10px] text-slate-500 font-semibold border-b border-slate-200">
-                          <tr><th className="px-2 py-1.5 w-8 text-center">#</th><th className="px-2 py-1.5 border-l border-slate-100">Op / Inputs</th><th className="px-2 py-1.5 text-right border-l border-slate-100">Output</th></tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 font-mono text-[10px] sm:text-xs text-slate-600">
-                          {ledger.map((row) => (
-                            <tr key={row.step} className="hover:bg-indigo-50/30 transition-colors group cursor-crosshair" onMouseEnter={() => setHlKey(mapOpToHl(row.op))} onMouseLeave={() => setHlKey(null)}>
-                              <td className="px-2 py-2 text-slate-400 align-top text-center border-r border-slate-50 bg-slate-50/30">{row.step}</td>
-                              <td className="px-2 py-2 align-top"><div className="text-indigo-600 font-medium mb-0.5 group-hover:text-indigo-700">{row.op}</div><div className="text-[9px] sm:text-[10px] text-slate-400 break-all">{row.inputs}</div></td>
-                              <td className="px-2 py-2 text-right align-top border-l border-slate-50"><div className="text-slate-800 font-medium">{row.outputs}</div>{row.note && <div className="text-[9px] text-slate-400 mt-0.5 italic">{row.note}</div>}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="p-2 border-t border-slate-200 bg-slate-50/80 backdrop-blur flex justify-between items-center text-[10px] sm:text-xs">
-                       <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border ${verified ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
-                         {verified ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}<span className="font-semibold">{verified ? "Verified" : "Tampered"}</span>
-                       </div>
-                       <div className="flex flex-col items-end"><span className="text-slate-400 text-[9px] uppercase tracking-wider">Total Penalty</span><span className="font-mono text-rose-600 font-bold">-{penalty.totalPenalty} pts</span></div>
-                    </div>
-                  </section>
-                </div>
-
-                <div className="lg:col-span-3 flex flex-col gap-4">
-                  <section className={`bg-white border rounded-lg overflow-hidden shadow-sm p-4 flex flex-col items-center justify-center gap-3 relative ${risk.border}`}>
-                    <div className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Transparency Score</div>
-                    <div className="relative flex items-center justify-center">
-                       <svg className="w-24 h-24 sm:w-28 sm:h-28 transform -rotate-90">
-                         <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100" />
-                         <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={251} strokeDashoffset={251 - (251 * penalty.score) / 100} className={`${risk.text} transition-all duration-1000 ease-out`} strokeLinecap="round" />
-                       </svg>
-                       <div className="absolute inset-0 flex flex-col items-center justify-center"><span className={`text-3xl font-bold ${risk.text}`}>{penalty.score}</span></div>
-                    </div>
-                    <button onClick={() => setShowDeepDive(true)} className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-full border ${risk.bg} ${risk.border} ${risk.text} hover:opacity-80 transition-opacity cursor-pointer shadow-sm group`}>
-                      <RiskIcon className="w-3.5 h-3.5" /><span className="text-xs font-bold">{risk.label}</span><ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                        <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showLedger ? 'rotate-180' : ''}`} />
                     </button>
-                    <div className="text-center"><span className="text-[10px] text-slate-400">Target: {ruleSet.targetScore}</span></div>
-                  </section>
 
-                  <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm p-3 sm:p-4">
-                     <div className="flex items-center gap-2 mb-2"><RefreshCw className="w-3.5 h-3.5 text-indigo-600" /><h3 className="text-xs font-semibold text-slate-700">ADIC Patch (最小修正)</h3></div>
-                     {patch ? (
-                        <div className="space-y-2">
-                          <div className="bg-slate-50 rounded p-2.5 border border-slate-200 text-xs relative overflow-hidden">
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />
-                            {renderPatchInfo(patch)}
-                            <div className="mt-2 pt-1.5 border-t border-slate-200 flex justify-between items-center text-[10px]">
-                              <span className="text-slate-400">Gain</span>
-                              <span className="text-indigo-600 font-mono">+{patch.newPenalty.score - penalty.score} pts (→{patch.newPenalty.score})</span>
+                    {showLedger && (
+                        <div className="mt-4 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm animate-in fade-in slide-in-from-top-2">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse min-w-[350px]">
+                                    <thead className="bg-slate-50 text-[10px] text-slate-500 font-bold border-b border-slate-200">
+                                        <tr><th className="px-3 py-2 w-10 text-center">#</th><th className="px-3 py-2">操作 / 入力</th><th className="px-3 py-2 text-right">出力</th></tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 font-mono text-[10px] sm:text-xs text-slate-600">
+                                        {ledger.map((row) => (
+                                            <tr key={row.step} className="hover:bg-indigo-50/30 transition-colors" onMouseEnter={() => setHlKey(mapOpToHl(row.op))} onMouseLeave={() => setHlKey(null)}>
+                                                <td className="px-3 py-2.5 text-slate-400 text-center bg-slate-50/30">{row.step}</td>
+                                                <td className="px-3 py-2.5">
+                                                    <div className="text-indigo-600 font-bold mb-0.5">{row.op}</div>
+                                                    <div className="text-[9px] text-slate-400 break-all">{row.inputs}</div>
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right">
+                                                    <div className="font-bold text-slate-700">{row.outputs}</div>
+                                                    {row.note && <div className="text-[9px] text-slate-400 mt-0.5 italic">{row.note}</div>}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
-                          </div>
+                            <div className="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] font-bold ${verified ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
+                                    {verified ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />} {verified ? "Verified" : "Tampered"}
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] text-slate-400 block">Total Penalty</span>
+                                    <span className="font-mono text-sm font-bold text-rose-600">-{penalty.totalPenalty} pts</span>
+                                </div>
+                            </div>
                         </div>
-                      ) : (
-                        <div className="py-2 text-center text-emerald-600 flex items-center justify-center gap-1"><CheckCircle2 className="w-4 h-4" /><span className="text-xs">達成済み</span></div>
-                      )}
-                  </section>
-
-                  <section className={`bg-white border ${shared ? 'border-sky-400 ring-1 ring-sky-100' : 'border-slate-200'} rounded-lg shadow-sm p-3 transition-all`}>
-                     <div className="flex items-center justify-between mb-2">
-                       <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5"><Share2 className={`w-3.5 h-3.5 ${shared ? 'text-sky-500' : 'text-slate-400'}`} /> Multi-Party View</h3>
-                       <button onClick={() => setShared(!shared)} className={`text-[9px] px-1.5 py-0.5 rounded border ${shared ? 'bg-sky-50 border-sky-200 text-sky-700' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>{shared ? "ON" : "OFF"}</button>
-                     </div>
-                     <p className="text-[10px] text-slate-500 mb-2 leading-snug">契約DB全体に適用し、<strong className="text-slate-700">危険な契約を一気にあぶり出す</strong>。</p>
-                     <div className={`transition-opacity duration-500 ${shared ? 'opacity-100' : 'opacity-30'}`}>
-                        <div className="flex justify-between items-center text-[10px] mt-2"><span className="text-slate-500">Counterparty</span><span className={`font-mono ${shared ? risk.text : 'text-slate-400'}`}>{shared ? penalty.score : "--"}</span></div>
-                        <div className="h-1 bg-slate-100 rounded-full overflow-hidden mt-1"><div className={`h-full ${risk.meter}`} style={{ width: `${shared ? penalty.score : 0}%` }} /></div>
-                     </div>
-                  </section>
-
-                  <section className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5"><Upload className="w-3.5 h-3.5 text-slate-400" /> Registry</h3>
-                      <span className="text-[9px] text-indigo-600 border border-indigo-100 bg-indigo-50 px-1 rounded">Verifiable</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <button onClick={() => {
-                            const payload = { params, ruleSetId: ruleSet.id, penalty, ledger, ledgerId };
-                            setJsonExport(JSON.stringify(payload, null, 2));
-                          }} className="flex-1 text-[10px] py-1.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 rounded text-slate-600 flex items-center justify-center gap-1"><Download className="w-3 h-3" /> JSON</button>
-                         <button onClick={() => handleRegAction("save")} className="flex-1 text-[10px] py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded text-emerald-700 flex items-center justify-center gap-1"><Share2 className="w-3 h-3" /> Local Reg</button>
-                      </div>
-                      {jsonExport && <textarea className="w-full h-12 bg-slate-50 border border-slate-200 rounded text-[9px] font-mono p-1 focus:outline-none" value={jsonExport} readOnly />}
-                      <div className="pt-2 border-t border-dashed border-slate-100">
-                        <div className="flex gap-1.5 items-center">
-                          <input type="text" className="flex-1 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-[10px] font-mono" placeholder="Ledger ID..." value={regIdInput} onChange={(e) => setRegIdInput(e.target.value.toUpperCase())} />
-                          <button className="text-[10px] px-2 py-1 border border-sky-200 rounded bg-sky-50 text-sky-700" onClick={() => handleRegAction("load")}>Verify</button>
-                        </div>
-                        {regMsg && <p className={`mt-1 text-[9px] ${regStatus === "error" ? "text-rose-600" : "text-emerald-600"}`}>{regMsg}</p>}
-                      </div>
-                    </div>
-                  </section>
+                    )}
                 </div>
-              </main>
+              </div>
 
               <DeepDiveSection params={params} ruleSet={ruleSet} penalty={penalty} isOpen={showDeepDive} onClose={() => setShowDeepDive(false)} />
               
               {!showDeepDive && (
-                <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-40">
-                   <button onClick={() => setShowDeepDive(true)} className="pointer-events-auto bg-slate-900/90 backdrop-blur text-white text-xs px-4 py-2 rounded-full shadow-lg border border-slate-700 flex items-center gap-2 hover:bg-slate-800 transition-colors animate-in fade-in slide-in-from-bottom-2">
-                     <Book className="w-3.5 h-3.5 text-indigo-400" /> なぜこの点数？（解説）
+                <div className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-40 px-4">
+                   <button onClick={() => setShowDeepDive(true)} className="pointer-events-auto bg-slate-800/95 backdrop-blur text-white text-xs font-bold px-5 py-3 rounded-full shadow-xl border border-slate-600 flex items-center gap-2 hover:bg-slate-700 transition-transform active:scale-95 animate-in fade-in slide-in-from-bottom-4">
+                     <Book className="w-4 h-4 text-indigo-300" />
+                     <span>なぜこの点数？ (解説を開く)</span>
                    </button>
                 </div>
               )}
