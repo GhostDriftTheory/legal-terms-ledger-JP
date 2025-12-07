@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法務ADIC 契約フェア台帳</title>
+    
+    <!-- デザイン用: Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React 本体 -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    
+    <!-- TypeScript/JSX をブラウザで動かすための翻訳機: Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Google Fonts: Noto Sans JP -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans JP', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#FAFAFA] text-slate-700">
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react, typescript">
+        const { useMemo, useState, useEffect, useRef } = React;
+
+        // --- Icons (Lucide React 代替) ---
+        // ブラウザ単体で動かすため、アイコンをSVGコンポーネントとして定義します
+        const IconBase = ({ children, className, ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" height="24" viewBox="0 0 24 24" 
+                fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
+                className={className} 
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const FileText = (props) => <IconBase {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></IconBase>;
+        const Scale = (props) => <IconBase {...props}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></IconBase>;
+        const Calculator = (props) => <IconBase {...props}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></IconBase>;
+        const ShieldAlert = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></IconBase>;
+        const ShieldCheck = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></IconBase>;
+        const ArrowRight = (props) => <IconBase {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></IconBase>;
+        const Share2 = (props) => <IconBase {...props}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></IconBase>;
+        const RefreshCw = (props) => <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconBase>;
+        const Info = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>;
+        const AlertTriangle = (props) => <IconBase {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>;
+        const CheckCircle2 = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></IconBase>;
+        const Settings = (props) => <IconBase {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>;
+        const BookOpen = (props) => <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></IconBase>;
+        const Gavel = (props) => <IconBase {...props}><path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></IconBase>;
+        const History = (props) => <IconBase {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></IconBase>;
+        const Download = (props) => <IconBase {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></IconBase>;
+        const Upload = (props) => <IconBase {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></IconBase>;
+        const Copy = (props) => <IconBase {...props}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></IconBase>;
+        const Lightbulb = (props) => <IconBase {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></IconBase>;
+        const Zap = (props) => <IconBase {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
+        const Users = (props) => <IconBase {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></IconBase>;
+        const Search = (props) => <IconBase {...props}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></IconBase>;
+        const Book = (props) => <IconBase {...props}><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></IconBase>;
+        const ChevronDown = (props) => <IconBase {...props}><path d="m6 9 6 6 6-6"/></IconBase>;
+        const XIcon = (props) => <IconBase {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>; // 変数名を X から XIcon に変更
+        const ArrowUp = (props) => <IconBase {...props}><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></IconBase>;
+
+        // --- Types & Interfaces ---
+        // TypeScript のインターフェースは実行時には不要ですが、型定義として残しておきます（Babelが除去します）
+        
+        // --- Constants ---
+        const RULE_SETS = [
+          {
+            id: "industryBaseline",
+            name: "Industry Baseline v1.0",
+            maxPayDays: 60,
+            maxInspectionDays: 30,
+            minLateRate: 0.10,
+            minLateRateBps: 1000,
+            targetScore: 80,
+          },
+          {
+            id: "freelanceUnion",
+            name: "Freelance Union v0.3",
+            maxPayDays: 45,
+            maxInspectionDays: 21,
+            minLateRate: 0.146,
+            minLateRateBps: 1460,
+            targetScore: 85,
+          },
+        ];
+
+        const CONTRACT_TEMPLATES = [
+          {
+            id: "friendly",
+            title: "契約A（ホワイト：良心的）",
+            text: `第◯条（報酬および支払時期）
+1. 甲は、本件業務の対価として、乙に対し報酬金額として金 800,000 円（税込）を支払う。
+2. 甲は、乙による成果物の検収完了後 30 日以内に前項の報酬を支払うものとする。
+3. 甲は、前項の支払を遅延した場合、支払期日の翌日から完済に至るまで、年 14.6% の割合による遅延損害金を乙に支払うものとする。
+4. 検収期間は、成果物の納品日から 10 日間とする。`,
+            params: { amount: 80, payDays: 30, inspectionDays: 10, lateRate: 0.146, taxIncluded: true, taxRate: 0.10 },
+            simpleExplanation: [
+              "30日入金：業界標準より早く、資金繰りに優しい。",
+              "検収10日：放置されるリスクが低く安全。",
+              "遅延金14.6%：支払遅延への抑止力がしっかりある。"
+            ]
+          },
+          {
+            id: "harsh",
+            title: "契約B（ブラック：重い条件）",
+            text: `第◯条（報酬および支払時期）
+1. 甲は、本件業務の対価として、乙に対し報酬金額として金 800,000 円（税別）を支払う。
+2. 甲は、乙による成果物の検収完了後 90 日以内に前項の報酬を支払うものとする。
+3. 甲は、支払遅延が生じた場合であっても、遅延損害金は年 3% を上限とする。
+4. 検収期間は、甲が必要と認める期間とし、特段の定めのない限りこれを制限しない。`,
+            params: { amount: 80, payDays: 90, inspectionDays: 999, lateRate: 0.03, taxIncluded: false, taxRate: 0.10 },
+            simpleExplanation: [
+              "90日後払い：下請法(60日)を超える可能性が高い危険水準。",
+              "検収「無制限」：難癖をつけられて永遠に入金されないリスク。",
+              "遅延金3%：企業側が支払いを遅らせても痛くない低設定。"
+            ]
+          },
+        ];
+
+        // --- Logic Functions ---
+        function getHighlightedSegments(text, key) {
+          if (!key) return [{ text, mark: false }];
+          const patterns = {
+            amount: /報酬金額として金[^。\n]*。/,
+            pay: /検収完了後[^。\n]*日以内に前項の報酬を支払う[^。\n]*。/,
+            inspection: /検収期間[^。\n]*。/,
+            late: /遅延損害金[^。\n]*。/
+          };
+          const pattern = patterns[key];
+          if (!pattern) return [{ text, mark: false }];
+
+          const segments = [];
+          let lastIndex = 0;
+          const globalPattern = new RegExp(pattern.source, "g");
+          let m;
+          while ((m = globalPattern.exec(text)) !== null) {
+            if (m.index > lastIndex) segments.push({ text: text.slice(lastIndex, m.index), mark: false });
+            segments.push({ text: m[0], mark: true });
+            lastIndex = m.index + m[0].length;
+          }
+          if (lastIndex < text.length) segments.push({ text: text.slice(lastIndex), mark: false });
+          return segments;
+        }
+
+        function computeTaxInfo(amount, taxRate, taxIncluded) {
+          const rawBase = taxIncluded ? amount / (1 + taxRate) : amount;
+          const base = Math.round(rawBase * 10) / 10;
+          const tax = Math.round(base * taxRate * 10) / 10;
+          const total = taxIncluded ? amount : Math.round((base + tax) * 10) / 10;
+          return { base, tax, total };
+        }
+
+        function computePenalty(params, rs) {
+          const payOver = Math.max(0, params.payDays - rs.maxPayDays);
+          const penPay = Math.min(40, Math.ceil(payOver / 5) * 4);
+
+          const effInsp = params.inspectionDays >= 999 ? rs.maxInspectionDays + 60 : params.inspectionDays;
+          const inspOver = Math.max(0, effInsp - rs.maxInspectionDays);
+          const penInspection = Math.min(30, Math.ceil(inspOver / 7) * 3);
+
+          const lateBps = Math.round(params.lateRate * 10000);
+          let penLate = 0;
+          if (lateBps < rs.minLateRateBps) {
+            const num = (rs.minLateRateBps - lateBps) * 30;
+            penLate = Math.min(30, Math.ceil(num / rs.minLateRateBps));
+          }
+
+          const totalPenalty = penPay + penInspection + penLate;
+          return { penPay, penInspection, penLate, totalPenalty, score: Math.max(0, 100 - totalPenalty) };
+        }
+
+        function buildLedger(params, rs, pen, ruleName) {
+          let s = 1;
+          const tax = computeTaxInfo(params.amount, params.taxRate, params.taxIncluded);
+
+          return [
+            { step: s++, op: "parse_amount", inputs: `text→"報酬金額"`, outputs: `amount=${params.amount}(万), ${params.taxIncluded ? "税込" : "税別"}`, note: "金額抽出" },
+            { step: s++, op: "compute_tax", inputs: `amt=${params.amount}, rate=${(params.taxRate*100).toFixed(0)}%, in=${params.taxIncluded}`, outputs: `base=${tax.base}, tax=${tax.tax}, tot=${tax.total}`, note: "税額計算" },
+            { step: s++, op: "parse_pay_days", inputs: `text→"${params.payDays}日"`, outputs: `val=${params.payDays}`, note: "支払サイト" },
+            { step: s++, op: "parse_insp_days", inputs: params.inspectionDays >= 999 ? 'text→"無制限"' : `text→"${params.inspectionDays}日"`, outputs: `val=${params.inspectionDays >= 999 ? '∞' : params.inspectionDays}`, note: "検収期間" },
+            { step: s++, op: "parse_late_rate", inputs: `text→"${(params.lateRate * 100).toFixed(1)}%"`, outputs: `val=${Math.round(params.lateRate*10000)}bps`, note: "遅延利率" },
+            { step: s++, op: "apply_ruleset", inputs: `id=${rs.id}`, outputs: `target=${rs.targetScore}`, note: "ルール適用" },
+            { step: s++, op: "calc_pen_pay", inputs: `val=${params.payDays}, max=${rs.maxPayDays}`, outputs: `pen=-${pen.penPay}`, note: "超過5日毎-4" },
+            { step: s++, op: "calc_pen_insp", inputs: `val=${params.inspectionDays >= 999 ? '∞' : params.inspectionDays}, max=${rs.maxInspectionDays}`, outputs: `pen=-${pen.penInspection}`, note: "超過7日毎-3" },
+            { step: s++, op: "calc_pen_late", inputs: `val=${Math.round(params.lateRate*10000)}, min=${rs.minLateRateBps}`, outputs: `pen=-${pen.penLate}`, note: "不足率減点" },
+            { step: s++, op: "compute_score", inputs: `100 - ${pen.totalPenalty}`, outputs: `score=${pen.score}`, note: "最終判定" },
+          ];
+        }
+
+        function createLedgerId(params, rs) {
+          const seed = JSON.stringify({ ...params, ruleSetId: rs.id, bps: rs.minLateRateBps });
+          let h = 0;
+          for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+          return h.toString(16).padStart(8, '0').slice(0, 8).toUpperCase();
+        }
+
+        function verifyLedger(params, rs, ledger, originalPen) {
+          const re = computePenalty(params, rs);
+          const coreMatch = re.score === originalPen.score && re.totalPenalty === originalPen.totalPenalty;
+          const last = ledger[ledger.length - 1];
+          const lastMatch = last.op === "compute_score" && last.outputs.includes(`score=${re.score}`);
+          const ops = new Set(ledger.map(e => e.op));
+          const hasTaxOps = ops.has("parse_amount") && ops.has("compute_tax");
+          return coreMatch && lastMatch && hasTaxOps;
+        }
+
+        function suggestMinimalPatch(params, rs) {
+          const target = rs.targetScore;
+          const candidates = [];
+
+          // PayDays
+          for (let d = params.payDays - 5; d >= 15; d -= 5) {
+            const c = { ...params, payDays: d };
+            const p = computePenalty(c, rs);
+            if (p.score >= target) {
+              candidates.push({ patchedParams: c, newPenalty: p, changedField: "payDays", changeCost: (params.payDays - d) / 5 });
+              break;
+            }
+          }
+          // Inspection
+          const effInsp = params.inspectionDays >= 999 ? rs.maxInspectionDays + 60 : params.inspectionDays;
+          if (effInsp > rs.maxInspectionDays) {
+            for (let d = effInsp - 7; d >= rs.maxInspectionDays; d -= 7) {
+              const c = { ...params, inspectionDays: d };
+              const p = computePenalty(c, rs);
+              if (p.score >= target) {
+                candidates.push({ patchedParams: c, newPenalty: p, changedField: "inspectionDays", changeCost: Math.ceil((effInsp - d) / 7) });
+                break;
+              }
+            }
+          }
+          // LateRate
+          const lbps = Math.round(params.lateRate * 10000);
+          if (lbps < rs.minLateRateBps) {
+            const c = { ...params, lateRate: rs.minLateRateBps / 10000 };
+            const p = computePenalty(c, rs);
+            if (p.score >= target) {
+              candidates.push({ patchedParams: c, newPenalty: p, changedField: "lateRate", changeCost: (rs.minLateRateBps - lbps) / 100 });
+            }
+          }
+
+          if (candidates.length === 0) return null;
+          return candidates.reduce((best, cur) => (cur.changeCost < best.changeCost ? cur : best), candidates[0]);
+        }
+
+        // --- Components ---
+
+        const DeepDiveSection = ({ params, ruleSet, penalty, isOpen, onClose }) => {
+          const ref = useRef(null);
+          useEffect(() => { if (isOpen && ref.current) ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, [isOpen]);
+
+          if (!isOpen) return null;
+
+          const payComment = penalty.penPay > 20 ? "大幅な超過。下請法等の基準を大きく逸脱。" : penalty.penPay > 0 ? "基準超過。資金繰りへの影響あり。" : "基準内。安全。";
+          const inspComment = penalty.penInspection > 20 ? "実質無制限の恐れ。極めて高リスク。" : penalty.penInspection > 0 ? "長期化のリスクあり。" : "短期間で完了。安全。";
+          const lateComment = penalty.penLate > 20 ? "ペナルティとして機能しない低水準。" : penalty.penLate > 0 ? "抑止力としてやや弱い。" : "十分な抑止力あり。";
+
+          return (
+            <div ref={ref} className="mt-8 mb-12 bg-slate-50 border border-slate-200 rounded-xl p-5 md:p-8 text-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-inner">
+              <div className="flex justify-between items-start mb-6 pb-4 border-b border-slate-200">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <Book className="w-5 h-5 text-indigo-600" />
+                    <span className="hidden sm:inline">ADIC Deep Dive: </span>
+                    スコアの透明性と「普通」の定義
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">AIの「勘」ではなく、数理的に確定する理由</p>
+                </div>
+                <button onClick={onClose} className="p-1.5 hover:bg-slate-200 rounded-full transition-colors"><XIcon className="w-5 h-5 text-slate-400" /></button>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8 text-sm">
+                <div className="space-y-6">
+                  <section>
+                    <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 bg-indigo-500 rounded-full"/> 1. 整数ベクトルへの変換</h4>
+                    <p className="text-xs leading-relaxed text-slate-600">自然言語を捨て、契約を3つの整数に変換して評価します。</p>
+                    <div className="bg-white p-2.5 rounded border border-slate-200 font-mono text-xs mt-2 text-slate-600">
+                      Input = {'{'} pay: {params.payDays}, insp: {params.inspectionDays >= 999 ? 999 : params.inspectionDays}, late: {Math.round(params.lateRate*10000)} {'}'}
+                    </div>
+                  </section>
+
+                  <section>
+                    <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 bg-indigo-500 rounded-full"/> 2. 確定計算プロセス</h4>
+                    <div className="space-y-2 font-mono text-[10px] sm:text-xs">
+                      <div className="bg-white border border-slate-100 rounded p-2">
+                        <div className="flex justify-between border-b border-dashed border-slate-200 pb-1 mb-1">
+                          <span className="text-slate-500">支払減点 (上限{ruleSet.maxPayDays}日)</span>
+                          <span className="text-rose-600 font-bold">-{penalty.penPay}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 leading-tight">{payComment}</div>
+                      </div>
+                      
+                      <div className="bg-white border border-slate-100 rounded p-2">
+                        <div className="flex justify-between border-b border-dashed border-slate-200 pb-1 mb-1">
+                          <span className="text-slate-500">検収減点 (上限{ruleSet.maxInspectionDays}日)</span>
+                          <span className="text-rose-600 font-bold">-{penalty.penInspection}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 leading-tight">{inspComment}</div>
+                      </div>
+
+                      <div className="bg-white border border-slate-100 rounded p-2">
+                        <div className="flex justify-between border-b border-dashed border-slate-200 pb-1 mb-1">
+                          <span className="text-slate-500">遅延減点 (下限{ruleSet.minLateRateBps}bps)</span>
+                          <span className="text-rose-600 font-bold">-{penalty.penLate}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 leading-tight">{lateComment}</div>
+                      </div>
+
+                      <div className="flex justify-between pt-1 font-bold text-indigo-700 bg-indigo-50/50 p-2 rounded mt-2">
+                        <span>Total Score = 100 - {penalty.totalPenalty}</span>
+                        <span>{penalty.score} pts</span>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="space-y-6 md:border-l md:border-slate-200 md:pl-8 flex flex-col justify-between">
+                  <div>
+                    <section className="mb-6">
+                        <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 bg-indigo-500 rounded-full"/> 3. 価値判断の分離</h4>
+                        <p className="text-xs leading-relaxed text-slate-600">
+                        「何が普通か」という政治的な議論は<span className="font-mono bg-slate-100 px-1 rounded">RuleSet</span>に封じ込めています。一度ルールを決めれば、判定は<strong className="text-indigo-700">誰が計算しても同じになる数学的命題</strong>（Score &lt; Target）に還元されます。
+                        </p>
+                    </section>
+                    <section>
+                        <h4 className="font-bold text-indigo-900 text-xs uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 bg-indigo-500 rounded-full"/> 4. 検証可能性 (Verify)</h4>
+                        <p className="text-xs leading-relaxed text-slate-600">
+                        計算過程はLedger（台帳）に残ります。第三者はJSONを受け取り、自分の電卓で再計算して照合可能です。これにより「AIのブラックボックス」を排除し、説明責任を果たします。
+                        </p>
+                    </section>
+                  </div>
+                  <button onClick={onClose} className="self-center flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors mt-4 py-2 px-4 rounded hover:bg-slate-200/50">
+                      <ArrowUp className="w-3 h-3" /> 解説を閉じる
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const App = () => {
+          const [templateId, setTemplateId] = useState("harsh");
+          const [ruleSetId, setRuleSetId] = useState("industryBaseline");
+          const [shared, setShared] = useState(false);
+          const [jsonExport, setJsonExport] = useState("");
+          const [jsonImport, setJsonImport] = useState("");
+          const [importScore, setImportScore] = useState(null);
+          const [hlKey, setHlKey] = useState(null);
+          const [showDeepDive, setShowDeepDive] = useState(false);
+          const [regStatus, setRegStatus] = useState("idle");
+          const [regMsg, setRegMsg] = useState("");
+          const [regIdInput, setRegIdInput] = useState("");
+
+          const template = useMemo(() => CONTRACT_TEMPLATES.find(t => t.id === templateId), [templateId]);
+          const ruleSet = useMemo(() => RULE_SETS.find(r => r.id === ruleSetId), [ruleSetId]);
+          const [params, setParams] = useState(template.params);
+
+          useEffect(() => {
+            setParams(template.params);
+            setShared(false);
+            setJsonExport("");
+            setJsonImport("");
+            setImportScore(null);
+            setRegStatus("idle");
+            setRegMsg("");
+            setShowDeepDive(false);
+          }, [template]);
+
+          const penalty = useMemo(() => computePenalty(params, ruleSet), [params, ruleSet]);
+          
+          const taxInfo = useMemo(() => computeTaxInfo(params.amount, params.taxRate, params.taxIncluded), [params.amount, params.taxRate, params.taxIncluded]);
+
+          const ledger = useMemo(() => buildLedger(params, ruleSet, penalty, ruleSet.name), [params, ruleSet, penalty]);
+          const ledgerId = useMemo(() => createLedgerId(params, ruleSet), [params, ruleSet]);
+          const verified = useMemo(() => verifyLedger(params, ruleSet, ledger, penalty), [params, ruleSet, ledger, penalty]);
+          const patch = useMemo(() => suggestMinimalPatch(params, ruleSet), [params, ruleSet]);
+          const segments = useMemo(() => getHighlightedSegments(template.text, hlKey), [template.text, hlKey]);
+
+          const mapOpToHl = (op) => {
+            if (op.includes("amount")) return "amount";
+            if (op.includes("pay")) return "pay";
+            if (op.includes("insp")) return "inspection";
+            if (op.includes("late")) return "late";
+            return null;
+          };
+
+          const getRiskColor = (s, t) => {
+            if (s >= t) return { bg: "bg-emerald-50", border: "border-emerald-600", text: "text-emerald-700", meter: "bg-emerald-600", icon: ShieldCheck, label: "安全圏" };
+            if (s >= t - 10) return { bg: "bg-amber-50", border: "border-amber-500", text: "text-amber-700", meter: "bg-amber-500", icon: AlertTriangle, label: "注意" };
+            return { bg: "bg-rose-50", border: "border-rose-500", text: "text-rose-700", meter: "bg-rose-600", icon: ShieldAlert, label: "危険" };
+          };
+
+          const risk = getRiskColor(penalty.score, ruleSet.targetScore);
+          const RiskIcon = risk.icon;
+          const isHarsh = template.id === "harsh";
+
+          const renderPatchInfo = (p) => {
+            const config = {
+              payDays: { label: "支払サイト", old: `${params.payDays}日`, new: `${p.patchedParams.payDays}日` },
+              inspectionDays: { label: "検収期間", old: params.inspectionDays >= 999 ? "無制限" : `${params.inspectionDays}日`, new: `${p.patchedParams.inspectionDays}日` },
+              lateRate: { label: "遅延損害金", old: `${Math.round(params.lateRate*10000)}bps`, new: `${Math.round(p.patchedParams.lateRate*10000)}bps` }
+            }[p.changedField];
+
+            return (
+              <React.Fragment>
+                <div className="flex justify-between items-center mb-1"><span className="text-slate-500 font-medium">{config.label}</span><ArrowRight className="w-3 h-3 text-slate-400" /></div>
+                <div className="flex justify-between items-end"><span className="text-slate-400 line-through decoration-slate-400 text-xs">{config.old}</span><span className="text-indigo-600 font-bold text-base">{config.new}</span></div>
+              </React.Fragment>
+            );
+          };
+
+          const handleRegAction = (action) => {
+            if (typeof window === "undefined") return;
+            const key = (id) => `LEGAL_ADIC_LEDGER_${id}`;
+            if (action === "save") {
+              try {
+                window.localStorage.setItem(key(ledgerId), JSON.stringify({ params, ruleSetId: ruleSet.id, penalty, ledger }));
+                setRegStatus("published"); setRegMsg(`ID ${ledgerId} を保存しました`);
+              } catch { setRegStatus("error"); setRegMsg("保存失敗"); }
+            } else {
+              setImportScore(null);
+              const id = regIdInput.trim().toUpperCase();
+              if (!id) { setRegStatus("error"); setRegMsg("IDを入力"); return; }
+              const raw = window.localStorage.getItem(key(id));
+              if (!raw) { setRegStatus("error"); setRegMsg("ID未登録"); return; }
+              try {
+                const obj = JSON.parse(raw);
+                const rs = RULE_SETS.find(r => r.id === obj.ruleSetId);
+                if (!rs) throw new Error();
+                const ok = verifyLedger(obj.params, rs, obj.ledger, obj.penalty);
+                setJsonImport(raw);
+                if (ok) { setImportScore(obj.penalty.score); setRegStatus("loaded"); setRegMsg(`ID ${id} 検証成功 (${obj.penalty.score}点)`); }
+                else { setRegStatus("error"); setRegMsg("検証失敗: 不整合"); }
+              } catch { setRegStatus("error"); setRegMsg("データ破損"); }
+            }
+          };
+
+          return (
+            <div className="min-h-screen bg-[#FAFAFA] text-slate-700 font-sans selection:bg-indigo-100 pb-24 text-sm sm:text-base">
+              <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
+
+              <div className="border-b border-slate-200 bg-white sticky top-0 z-30 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div>
+                        <span className="inline-block bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider border border-slate-200 mb-1">LEGALTECH DEMO</span>
+                        <div className="flex items-center gap-1.5 text-indigo-700 mb-0.5">
+                          <Gavel className="w-4 h-4" /><span className="text-[10px] sm:text-xs font-bold tracking-wider uppercase">法務ADIC</span>
+                        </div>
+                        <h1 className="text-lg sm:text-2xl font-bold text-slate-800 tracking-tight leading-tight">法務ADIC 契約フェア台帳</h1>
+                        <p className="text-xs sm:text-sm font-bold text-indigo-700 mt-1 flex items-center gap-1.5">
+                           <Scale className="w-4 h-4 shrink-0" />契約の公平性を100点満点で評価
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-1 w-full sm:w-auto min-w-[200px]">
+                         <label className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold flex items-center gap-1"><FileText className="w-3 h-3" /> Contract Template</label>
+                         <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} className="bg-white border-slate-300 text-slate-700 text-sm rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none shadow-sm">
+                           {CONTRACT_TEMPLATES.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                         </select>
+                      </div>
+                    </div>
+
+                    <div className="bg-indigo-950 border border-indigo-900 rounded-lg p-3 sm:p-4 shadow-lg text-slate-100">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex-1 space-y-2">
+                                <h3 className="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1.5"><Lightbulb className="w-3.5 h-3.5" /> この事例の意味</h3>
+                                <p className="text-[11px] sm:text-xs text-indigo-100 leading-relaxed">
+                                    この契約Bは<strong className="text-white">「支払遅延(90日)・検収不明・低ペナルティ」</strong>の3重苦。本デモはAIの気分ではなく<span className="bg-indigo-800 px-1 rounded text-emerald-300 font-semibold mx-0.5">確定した整数ルール</span>でこれを採点し、修正案を即提示します。
+                                </p>
+                            </div>
+                            {isHarsh && (
+                                <div className="flex-1 border-t md:border-t-0 md:border-l border-indigo-800 pt-3 md:pt-0 md:pl-4 space-y-2">
+                                    <h3 className="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> 社会実装の威力</h3>
+                                    <p className="text-[11px] sm:text-xs text-indigo-100 leading-relaxed">
+                                        全契約を一斉スキャンすれば、<strong className="text-white">「危険な契約・下請けいじめ」</strong>を瞬時に特定可能。単なる計算機ではなく、<span className="bg-emerald-900/50 px-1 rounded text-emerald-300 font-semibold mx-0.5">社会の公平性を監視する技術</span>です。
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <main className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-12 gap-4 relative z-10">
+                <div className="lg:col-span-4 flex flex-col gap-4">
+                  <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col h-full">
+                    <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-slate-400" /><h2 className="text-xs sm:text-sm font-semibold text-slate-700">契約書ドラフト（入力）</h2>
+                    </div>
+                    <div className="p-3 flex-1 flex flex-col gap-3">
+                      <div className="relative group flex-1">
+                        <div className="w-full h-full min-h-[150px] bg-slate-50 border border-slate-200 rounded px-3 py-2 text-[11px] sm:text-xs text-slate-800 font-mono whitespace-pre-wrap leading-relaxed overflow-y-auto max-h-[250px]">
+                          {segments.map((s, i) => s.mark ? <mark key={i} className="bg-amber-200 text-slate-900 rounded px-0.5">{s.text}</mark> : <span key={i}>{s.text}</span>)}
+                        </div>
+                        <div className="mt-1 text-[10px] text-slate-400 text-right">Ledger行ホバーでハイライト</div>
+                      </div>
+                      {template.simpleExplanation && (
+                          <div className="bg-rose-50 border border-rose-100 rounded p-2.5">
+                              <div className="flex items-center gap-1 mb-1.5"><AlertTriangle className="w-3 h-3 text-rose-500" /><span className="text-[11px] font-bold text-rose-700">ここがヤバい（要約）</span></div>
+                              <ul className="list-disc list-inside space-y-0.5">{template.simpleExplanation.map((t, i) => <li key={i} className="text-[10px] sm:text-[11px] text-slate-700">{t}</li>)}</ul>
+                          </div>
+                      )}
+                      <div className="space-y-3 pt-3 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-[10px]"><span className="text-slate-500 font-semibold uppercase">Parsed Params</span><Settings className="w-3 h-3 text-slate-400" /></div>
+                        
+                        {/* 金額×税のUIカード */}
+                        <div className="space-y-2">
+                          <div className="bg-slate-50 px-2 py-2 rounded border border-slate-200">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-slate-500 text-[10px] flex items-center gap-1.5"><Calculator className="w-3 h-3"/> 報酬金額 × 税</span>
+                              <div className="text-right">
+                                <span className="font-mono text-xs font-bold text-slate-800 block">合計 {taxInfo.total.toFixed(1)} 万円</span>
+                                <span className="text-[9px] text-slate-500">税抜 {taxInfo.base.toFixed(1)} / 税 {taxInfo.tax.toFixed(1)}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <input type="range" min={10} max={300} step={10} value={params.amount} onChange={(e) => setParams(prev => ({...prev, amount: Number(e.target.value)}))} className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 touch-pan-x" />
+                                <span className="text-[10px] text-slate-500 font-mono w-10 text-right">{params.amount}万</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[10px]">
+                                <div className="flex items-center gap-2">
+                                    <label className="inline-flex items-center gap-1 cursor-pointer"><input type="radio" className="w-3 h-3 accent-indigo-600" checked={params.taxIncluded} onChange={() => setParams(p => ({...p, taxIncluded: true}))} /><span className="text-slate-600">税込</span></label>
+                                    <label className="inline-flex items-center gap-1 cursor-pointer"><input type="radio" className="w-3 h-3 accent-indigo-600" checked={!params.taxIncluded} onChange={() => setParams(p => ({...p, taxIncluded: false}))} /><span className="text-slate-600">税別</span></label>
+                                </div>
+                                <span className="text-slate-400">税率{(params.taxRate*100).toFixed(0)}%</span>
+                            </div>
+                          </div>
+
+                          {/* 既存パラメータUI */}
+                          <div className="bg-slate-50 px-2 py-1.5 rounded border border-slate-200">
+                            <div className="flex justify-between items-center mb-1"><span className="text-slate-500 text-[10px] flex items-center gap-1"><History className="w-3 h-3"/> 支払サイト</span><span className="font-mono text-xs font-bold text-indigo-600">{params.payDays}日</span></div>
+                            <input type="range" min={15} max={120} step={5} value={params.payDays} onChange={(e) => setParams(prev => ({...prev, payDays: Number(e.target.value)}))} className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                          </div>
+                          <div className="flex justify-between items-center bg-slate-50 px-2 py-2 rounded border border-slate-200"><span className="text-slate-500 text-[10px]">検収期間</span><span className="font-mono text-xs text-slate-800">{params.inspectionDays >= 999 ? <span className="text-amber-600">無制限</span> : `${params.inspectionDays}日`}</span></div>
+                          <div className="flex justify-between items-center bg-slate-50 px-2 py-2 rounded border border-slate-200"><span className="text-slate-500 text-[10px]">遅延損害金</span><span className="font-mono text-xs text-slate-800">{(params.lateRate * 100).toFixed(1)}%</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="lg:col-span-5 flex flex-col gap-4">
+                  <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm flex flex-col h-full relative">
+                    <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                      <div className="flex items-center gap-2"><Calculator className="w-4 h-4 text-slate-400" /><h2 className="text-xs sm:text-sm font-semibold text-slate-700">ADIC Ledger (Σ₁台帳)</h2></div>
+                      <div className="flex items-center gap-1"><span className="text-[10px] text-slate-400">ID:</span><span className="font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 select-all max-w-[80px] sm:max-w-none truncate">{ledgerId}</span></div>
+                    </div>
+                    <div className="flex-1 overflow-x-auto bg-white scrollbar-thin scrollbar-thumb-slate-200">
+                      <table className="w-full text-left border-collapse min-w-[300px]">
+                        <thead className="bg-slate-50 sticky top-0 z-10 text-[10px] text-slate-500 font-semibold border-b border-slate-200">
+                          <tr><th className="px-2 py-1.5 w-8 text-center">#</th><th className="px-2 py-1.5 border-l border-slate-100">Op / Inputs</th><th className="px-2 py-1.5 text-right border-l border-slate-100">Output</th></tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-mono text-[10px] sm:text-xs text-slate-600">
+                          {ledger.map((row) => (
+                            <tr key={row.step} className="hover:bg-indigo-50/30 transition-colors group cursor-crosshair" onMouseEnter={() => setHlKey(mapOpToHl(row.op))} onMouseLeave={() => setHlKey(null)}>
+                              <td className="px-2 py-2 text-slate-400 align-top text-center border-r border-slate-50 bg-slate-50/30">{row.step}</td>
+                              <td className="px-2 py-2 align-top"><div className="text-indigo-600 font-medium mb-0.5 group-hover:text-indigo-700">{row.op}</div><div className="text-[9px] sm:text-[10px] text-slate-400 break-all">{row.inputs}</div></td>
+                              <td className="px-2 py-2 text-right align-top border-l border-slate-50"><div className="text-slate-800 font-medium">{row.outputs}</div>{row.note && <div className="text-[9px] text-slate-400 mt-0.5 italic">{row.note}</div>}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="p-2 border-t border-slate-200 bg-slate-50/80 backdrop-blur flex justify-between items-center text-[10px] sm:text-xs">
+                       <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border ${verified ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
+                         {verified ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}<span className="font-semibold">{verified ? "Verified" : "Tampered"}</span>
+                       </div>
+                       <div className="flex flex-col items-end"><span className="text-slate-400 text-[9px] uppercase tracking-wider">Total Penalty</span><span className="font-mono text-rose-600 font-bold">-{penalty.totalPenalty} pts</span></div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="lg:col-span-3 flex flex-col gap-4">
+                  <section className={`bg-white border rounded-lg overflow-hidden shadow-sm p-4 flex flex-col items-center justify-center gap-3 relative ${risk.border}`}>
+                    <div className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Transparency Score</div>
+                    <div className="relative flex items-center justify-center">
+                       <svg className="w-24 h-24 sm:w-28 sm:h-28 transform -rotate-90">
+                         <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100" />
+                         <circle cx="50%" cy="50%" r="40%" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={251} strokeDashoffset={251 - (251 * penalty.score) / 100} className={`${risk.text} transition-all duration-1000 ease-out`} strokeLinecap="round" />
+                       </svg>
+                       <div className="absolute inset-0 flex flex-col items-center justify-center"><span className={`text-3xl font-bold ${risk.text}`}>{penalty.score}</span></div>
+                    </div>
+                    <button onClick={() => setShowDeepDive(true)} className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-full border ${risk.bg} ${risk.border} ${risk.text} hover:opacity-80 transition-opacity cursor-pointer shadow-sm group`}>
+                      <RiskIcon className="w-3.5 h-3.5" /><span className="text-xs font-bold">{risk.label}</span><ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                    </button>
+                    <div className="text-center"><span className="text-[10px] text-slate-400">Target: {ruleSet.targetScore}</span></div>
+                  </section>
+
+                  <section className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm p-3 sm:p-4">
+                     <div className="flex items-center gap-2 mb-2"><RefreshCw className="w-3.5 h-3.5 text-indigo-600" /><h3 className="text-xs font-semibold text-slate-700">ADIC Patch (最小修正)</h3></div>
+                     {patch ? (
+                        <div className="space-y-2">
+                          <div className="bg-slate-50 rounded p-2.5 border border-slate-200 text-xs relative overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />
+                            {renderPatchInfo(patch)}
+                            <div className="mt-2 pt-1.5 border-t border-slate-200 flex justify-between items-center text-[10px]">
+                              <span className="text-slate-400">Gain</span>
+                              <span className="text-indigo-600 font-mono">+{patch.newPenalty.score - penalty.score} pts (→{patch.newPenalty.score})</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="py-2 text-center text-emerald-600 flex items-center justify-center gap-1"><CheckCircle2 className="w-4 h-4" /><span className="text-xs">達成済み</span></div>
+                      )}
+                  </section>
+
+                  <section className={`bg-white border ${shared ? 'border-sky-400 ring-1 ring-sky-100' : 'border-slate-200'} rounded-lg shadow-sm p-3 transition-all`}>
+                     <div className="flex items-center justify-between mb-2">
+                       <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5"><Share2 className={`w-3.5 h-3.5 ${shared ? 'text-sky-500' : 'text-slate-400'}`} /> Multi-Party View</h3>
+                       <button onClick={() => setShared(!shared)} className={`text-[9px] px-1.5 py-0.5 rounded border ${shared ? 'bg-sky-50 border-sky-200 text-sky-700' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>{shared ? "ON" : "OFF"}</button>
+                     </div>
+                     <p className="text-[10px] text-slate-500 mb-2 leading-snug">契約DB全体に適用し、<strong className="text-slate-700">危険な契約を一気にあぶり出す</strong>。</p>
+                     <div className={`transition-opacity duration-500 ${shared ? 'opacity-100' : 'opacity-30'}`}>
+                        <div className="flex justify-between items-center text-[10px] mt-2"><span className="text-slate-500">Counterparty</span><span className={`font-mono ${shared ? risk.text : 'text-slate-400'}`}>{shared ? penalty.score : "--"}</span></div>
+                        <div className="h-1 bg-slate-100 rounded-full overflow-hidden mt-1"><div className={`h-full ${risk.meter}`} style={{ width: `${shared ? penalty.score : 0}%` }} /></div>
+                     </div>
+                  </section>
+
+                  <section className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5"><Upload className="w-3.5 h-3.5 text-slate-400" /> Registry</h3>
+                      <span className="text-[9px] text-indigo-600 border border-indigo-100 bg-indigo-50 px-1 rounded">Verifiable</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <button onClick={() => {
+                            const payload = { params, ruleSetId: ruleSet.id, penalty, ledger, ledgerId };
+                            setJsonExport(JSON.stringify(payload, null, 2));
+                          }} className="flex-1 text-[10px] py-1.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 rounded text-slate-600 flex items-center justify-center gap-1"><Download className="w-3 h-3" /> JSON</button>
+                         <button onClick={() => handleRegAction("save")} className="flex-1 text-[10px] py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded text-emerald-700 flex items-center justify-center gap-1"><Share2 className="w-3 h-3" /> Local Reg</button>
+                      </div>
+                      {jsonExport && <textarea className="w-full h-12 bg-slate-50 border border-slate-200 rounded text-[9px] font-mono p-1 focus:outline-none" value={jsonExport} readOnly />}
+                      <div className="pt-2 border-t border-dashed border-slate-100">
+                        <div className="flex gap-1.5 items-center">
+                          <input type="text" className="flex-1 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-[10px] font-mono" placeholder="Ledger ID..." value={regIdInput} onChange={(e) => setRegIdInput(e.target.value.toUpperCase())} />
+                          <button className="text-[10px] px-2 py-1 border border-sky-200 rounded bg-sky-50 text-sky-700" onClick={() => handleRegAction("load")}>Verify</button>
+                        </div>
+                        {regMsg && <p className={`mt-1 text-[9px] ${regStatus === "error" ? "text-rose-600" : "text-emerald-600"}`}>{regMsg}</p>}
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </main>
+
+              <DeepDiveSection params={params} ruleSet={ruleSet} penalty={penalty} isOpen={showDeepDive} onClose={() => setShowDeepDive(false)} />
+              
+              {!showDeepDive && (
+                <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none z-40">
+                   <button onClick={() => setShowDeepDive(true)} className="pointer-events-auto bg-slate-900/90 backdrop-blur text-white text-xs px-4 py-2 rounded-full shadow-lg border border-slate-700 flex items-center gap-2 hover:bg-slate-800 transition-colors animate-in fade-in slide-in-from-bottom-2">
+                     <Book className="w-3.5 h-3.5 text-indigo-400" /> なぜこの点数？（解説）
+                   </button>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<App />);
+    </script>
+</body>
+</html>
